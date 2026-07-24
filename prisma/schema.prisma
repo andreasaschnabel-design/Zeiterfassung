@@ -29,6 +29,12 @@ enum AuditAction {
   DELETE
 }
 
+enum SecurityAction {
+  PASSWORD_RESET
+  EMPLOYEE_ACTIVATED
+  EMPLOYEE_DEACTIVATED
+}
+
 model User {
   id                String   @id @default(cuid())
   email             String   @unique
@@ -40,9 +46,11 @@ model User {
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
 
-  sessions    Session[]
-  timeEntries TimeEntry[]
-  auditLogs   AuditLog[]  @relation("AuditActor")
+  sessions         Session[]
+  timeEntries      TimeEntry[]
+  auditLogs        AuditLog[]    @relation("AuditActor")
+  securityAsTarget SecurityLog[] @relation("SecurityLogTarget")
+  securityAsActor  SecurityLog[] @relation("SecurityLogActor")
 }
 
 model TimeEntry {
@@ -89,6 +97,22 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// US-12: Sicherheitsereignisse. Getrennt vom AuditLog — andere Zwecke und
+// Aufbewahrungspflichten (AuditLog unterliegt § 17 MiLoG, SecurityLog nicht).
+model SecurityLog {
+  id           String         @id @default(cuid())
+  action       SecurityAction
+  targetUserId String
+  actorId      String
+  details      Json?
+  occurredAt   DateTime       @default(now())
+
+  targetUser User @relation("SecurityLogTarget", fields: [targetUserId], references: [id])
+  actor      User @relation("SecurityLogActor", fields: [actorId], references: [id])
+
+  @@index([targetUserId, occurredAt])
 }
 
 // US-10/AK-6: Globale Parameter als key/value.

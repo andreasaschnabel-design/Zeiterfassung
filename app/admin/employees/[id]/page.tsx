@@ -9,6 +9,7 @@ import { evaluateLimit } from "@/lib/time/limit";
 import { setEmployeeActive } from "../actions";
 import { EditEmployeeForm } from "./edit-form";
 import { AdminCreateEntryForm } from "./admin-create-entry-form";
+import { ResetPasswordForm } from "./reset-password-form";
 
 // US-10 (Stammdaten) + US-07 (Korrektur): Detail + Monatsansicht je Mitarbeiter.
 export default async function EmployeeDetailPage({
@@ -165,6 +166,16 @@ export default async function EmployeeDetailPage({
             monthlyLimitHours,
           }}
         />
+      </section>
+
+      {/* US-12: Passwort zuruecksetzen */}
+      <section className="mt-10 border-t pt-6">
+        <h2 className="mb-3 text-lg font-semibold">Passwort zuruecksetzen</h2>
+        <p className="mb-4 text-sm text-gray-600">
+          Setzt ein neues Passwort und beendet alle bestehenden Sitzungen des
+          Mitarbeiters. Das Passwort wird nur einmal angezeigt.
+        </p>
+        <ResetPasswordForm userId={employee.id} />
       </section>
 
       <section className="mt-10 border-t pt-6">
