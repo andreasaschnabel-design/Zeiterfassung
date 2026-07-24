@@ -8,6 +8,8 @@ import {
   formatMinutes,
   isValidHHMM,
 } from "@/lib/time/core";
+import { isEmployeeEditable } from "@/lib/time/dates";
+import { EDIT_GRACE_DAYS } from "@/lib/constants";
 
 const initial: FormState = {};
 const BREAK_CHIPS = [0, 15, 30, 45];
@@ -17,9 +19,16 @@ const BREAK_CHIPS = [0, 15, 30, 45];
 export function EntryForm({ today }: { today: string }) {
   const [state, formAction, pending] = useActionState(createTimeEntry, initial);
 
+  const [workDate, setWorkDate] = useState(today);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [breakMinutes, setBreakMinutes] = useState(30);
+
+  // US-04 (Kritisch): Hinweis, wenn ein rueckdatierter Eintrag nach dem Anlegen
+  // sofort nicht mehr durch den Mitarbeiter editierbar waere.
+  const willBeLocked =
+    /^\d{4}-\d{2}-\d{2}$/.test(workDate) &&
+    !isEmployeeEditable(workDate, today, EDIT_GRACE_DAYS);
 
   const duration =
     isValidHHMM(start) && isValidHHMM(end)
@@ -39,10 +48,17 @@ export function EntryForm({ today }: { today: string }) {
           name="workDate"
           type="date"
           required
-          defaultValue={today}
+          value={workDate}
+          onChange={(e) => setWorkDate(e.target.value)}
           max={today} /* AK-6: kein Zukunftsdatum */
           className="min-h-12 rounded-md border border-gray-300 px-3 text-base"
         />
+        {willBeLocked ? (
+          <p className="text-sm text-amber-800">
+            Hinweis: Dieser Tag liegt ausserhalb deines Bearbeitungszeitraums —
+            nach dem Speichern kannst nur noch der Admin ihn aendern.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

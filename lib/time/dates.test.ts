@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   addDays,
   dbDateToIso,
+  isEmployeeEditable,
   isoDateToDbDate,
   monthRange,
   shiftMonth,
@@ -104,5 +105,26 @@ describe("shiftMonth (Jahreswechsel)", () => {
   it("wechselt das Jahr korrekt", () => {
     expect(shiftMonth("2026-12", 1)).toBe("2027-01");
     expect(shiftMonth("2026-01", -1)).toBe("2025-12");
+  });
+});
+
+describe("isEmployeeEditable (Karenzfrist)", () => {
+  it("laufender Monat ist immer editierbar", () => {
+    expect(isEmployeeEditable("2026-07-01", "2026-07-24", 3)).toBe(true);
+    expect(isEmployeeEditable("2026-07-24", "2026-07-24", 3)).toBe(true);
+  });
+
+  it("Vormonat bis zum 3. des Folgemonats editierbar", () => {
+    expect(isEmployeeEditable("2026-06-30", "2026-07-03", 3)).toBe(true);
+    expect(isEmployeeEditable("2026-06-30", "2026-07-04", 3)).toBe(false);
+  });
+
+  it("aeltere Monate sind gesperrt", () => {
+    expect(isEmployeeEditable("2026-05-15", "2026-07-01", 3)).toBe(false);
+  });
+
+  it("Jahreswechsel korrekt (shiftMonth, nicht month-1)", () => {
+    expect(isEmployeeEditable("2025-12-20", "2026-01-02", 3)).toBe(true);
+    expect(isEmployeeEditable("2025-12-20", "2026-01-05", 3)).toBe(false);
   });
 });

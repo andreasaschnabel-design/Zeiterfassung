@@ -1,9 +1,11 @@
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import type { User } from "@prisma/client";
+import type { TimeEntry, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE } from "@/lib/auth/cookie";
 import { validateSession } from "@/lib/auth/session";
+import { EDIT_GRACE_DAYS } from "@/lib/constants";
+import { dbDateToIso, isEmployeeEditable, todayISO } from "@/lib/time/dates";
 
 // US-01, Uebergabe: requireUser() / requireAdmin() sind ab hier die
 // VERBINDLICHEN Einstiegspunkte jeder geschuetzten Route bzw. Server-Action.
@@ -42,4 +44,49 @@ export async function requireEmployeeTarget(id: string): Promise<User> {
   const employee = await prisma.user.findUnique({ where: { id } });
   if (!employee || employee.role !== "EMPLOYEE") notFound();
   return employee;
+}
+
+// US-04: Ergebnis von requireOwnEditableEntry. Der Guard WIRFT NICHT bei den
+// eintragsbezogenen Faellen (Kritisch) — sonst landet die Meldung auf der
+// Next.js-Fehlerseite statt im Formular. Der Aufrufer entscheidet:
+//   - reason "not_found" → notFound() (AK-9: Existenz verschleiern)
+//   - reason "locked"    → sprechende Meldung im Formular (AK-2)
+export type EditableEntryResult =
+  | { ok: true; entry: TimeEntry }
+  | { ok: false; reason: "not_found" }
+  | { ok: false; reason: "locked"; message: string; entry: TimeEntry };
+
+/**
+ * US-04: Prueft, ob der angemeldete Mitarbeiter diesen Eintrag bearbeiten darf.
+ *
+ * findUnique ist von der Soft-Delete-Middleware ausgenommen (DE-04) — ein
+ * bereits geloeschter Eintrag zaehlt hier als "nicht adressierbar".
+ * `now` ist injizierbar (Karenzfrist testbar ohne Systemzeit-Manipulation).
+ */
+export async function requireOwnEditableEntry(
+  id: string,
+  now: Date = new Date(),
+): Promise<EditableEntryResult> {
+  const user = await requireUser();
+  const entry = await prisma.timeEntry.findUnique({ where: { id } });
+
+  // AK-9: fremd / geloescht / unbekannt → nicht adressierbar.
+  if (!entry || entry.deletedAt !== null || entry.userId !== user.id) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  // AK-1/AK-2: Karenzfrist.
+  if (
+    !isEmployeeEditable(dbDateToIso(entry.workDate), todayISO(now), EDIT_GRACE_DAYS)
+  ) {
+    return {
+      ok: false,
+      reason: "locked",
+      message:
+        "Dieser Eintrag liegt ausserhalb deines Bearbeitungszeitraums. Nur der Admin kann ihn noch aendern.",
+      entry,
+    };
+  }
+
+  return { ok: true, entry };
 }

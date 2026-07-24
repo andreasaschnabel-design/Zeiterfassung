@@ -21,6 +21,13 @@ export const MAX_BACKDATE_DAYS = 31;
 export const WARNING_THRESHOLD = 0.9;
 
 /**
+ * US-04: Karenzfrist. Ein Eintrag des Vormonats bleibt fuer den Mitarbeiter
+ * bis zum EDIT_GRACE_DAYS. des Folgemonats bearbeitbar. Der Admin unterliegt
+ * dieser Grenze NICHT (US-07).
+ */
+export const EDIT_GRACE_DAYS = 3;
+
+/**
  * US-01: Login-Rate-Limit. Der Zaehler greift VOR dem Argon2-Aufruf, damit
  * Argon2id (19 MB pro Versuch) kein DoS-Vektor wird. Sperre ab dem
  * (MAX_LOGIN_ATTEMPTS + 1)-ten Versuch innerhalb des Fensters.

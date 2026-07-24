@@ -167,7 +167,8 @@ export default async function DashboardPage({
                   <th className="py-2 pr-4">Ende</th>
                   <th className="py-2 pr-4">Pause</th>
                   <th className="py-2 pr-4">Dauer</th>
-                  <th className="py-2">Notiz</th>
+                  <th className="py-2 pr-4">Notiz</th>
+                  <th className="py-2" />
                 </tr>
               </thead>
               <tbody>
@@ -178,7 +179,15 @@ export default async function DashboardPage({
                     <td className="py-2 pr-4">{e.endTime}</td>
                     <td className="py-2 pr-4">{e.breakMinutes} min</td>
                     <td className="py-2 pr-4">{formatMinutes(e.durationMinutes)}</td>
-                    <td className="py-2 text-gray-600">{e.note ?? ""}</td>
+                    <td className="py-2 pr-4 text-gray-600">{e.note ?? ""}</td>
+                    <td className="py-2">
+                      <Link
+                        href={`/dashboard/entries/${e.id}`}
+                        className="text-blue-700 underline"
+                      >
+                        Bearbeiten
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

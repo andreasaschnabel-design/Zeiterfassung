@@ -98,3 +98,28 @@ export function shiftMonth(ym: string, delta: number): string {
   const d = new Date(Date.UTC(year, month - 1 + delta, 1));
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
+
+/**
+ * US-04: Karenzfrist fuer die Mitarbeiter-Bearbeitung. Bearbeitbar ist der
+ * laufende Monat plus der Vormonat bis zum `graceDays`. des Folgemonats.
+ * `shiftMonth()` fuer den Jahreswechsel (nicht `month - 1`).
+ *
+ * Nur fuer Mitarbeiter — der Admin unterliegt dieser Grenze nicht (US-07).
+ */
+export function isEmployeeEditable(
+  workDateISO: string,
+  today: string,
+  graceDays: number,
+): boolean {
+  const workYM = workDateISO.slice(0, 7);
+  const todayYM = today.slice(0, 7);
+
+  if (workYM === todayYM) return true; // laufender Monat
+
+  if (workYM === shiftMonth(todayYM, -1)) {
+    // Vormonat: nur bis zum graceDays. des aktuellen Monats.
+    return Number(today.slice(8, 10)) <= graceDays;
+  }
+
+  return false;
+}
