@@ -35,7 +35,7 @@ export default async function AdminOverviewPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <h1 className="text-2xl font-semibold">Monatsuebersicht</h1>
         <Link href="/admin" className="text-sm text-blue-700 underline">
           Zum Adminbereich
@@ -43,7 +43,7 @@ export default async function AdminOverviewPage({
       </div>
 
       {/* AK-3: Monatsnavigation, Pfeile deaktivieren statt verstecken. */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         {hasPrev ? (
           <Link href={`/admin/overview?month=${shiftMonth(ym, -1)}`}
             className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm">

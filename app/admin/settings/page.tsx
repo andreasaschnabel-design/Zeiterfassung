@@ -10,7 +10,7 @@ export default async function SettingsPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <h1 className="text-2xl font-semibold">Globale Einstellungen</h1>
         <Link href="/admin" className="text-sm text-blue-700 underline">
           Zum Adminbereich
