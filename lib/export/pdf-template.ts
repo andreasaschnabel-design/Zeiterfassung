@@ -93,6 +93,8 @@ export function renderExportHtml(params: {
   employerName: string;
   generatedAt: string; // vorformatierter Zeitstempel (Europe/Berlin)
   employees: EmployeeExport[];
+  /** US-15: @font-face-CSS mit Base64-DejaVuSans. Leer lassen = Systemfont. */
+  fontFaceCss?: string;
 }): string {
   const body = params.employees
     .map((emp) => section(params.employerName, emp))
@@ -103,7 +105,7 @@ export function renderExportHtml(params: {
 <head>
 <meta charset="utf-8" />
 <style>
-  /* US-15: hier @font-face DejaVuSans (Base64) ergaenzen. */
+  ${params.fontFaceCss ?? ""}
   * { box-sizing: border-box; }
   body { font-family: "DejaVu Sans", Arial, sans-serif; color: #000; font-size: 11px; margin: 24px; }
   h1 { font-size: 16px; margin: 0 0 12px; }

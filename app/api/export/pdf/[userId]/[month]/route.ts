@@ -1,12 +1,14 @@
 import { requireExportReady } from "@/lib/export/ready";
 import { renderExportHtml } from "@/lib/export/pdf-template";
 import { renderHtmlToPdf } from "@/lib/export/pdf";
+import { loadFontFaceCss } from "@/lib/export/fonts";
 import { buildAllEmployeeExports, buildEmployeeExport } from "@/lib/export/data";
 import { collectiveFileName, exportFileName } from "@/lib/export/filename";
 import { berlinTimestamp } from "@/lib/time/dates";
 
-// US-08. US-15 ergaenzt hier maxDuration/memory (Vercel-Funktionsgroesse).
+// US-15: Node-Runtime, laengeres Zeitlimit (memory=1024 in vercel.json).
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function GET(
   _req: Request,
@@ -44,6 +46,7 @@ export async function GET(
     employerName: ready.settings.employerName,
     generatedAt,
     employees,
+    fontFaceCss: loadFontFaceCss(), // US-15: Base64-Schriften einbetten
   });
   const pdf = await renderHtmlToPdf(html);
 

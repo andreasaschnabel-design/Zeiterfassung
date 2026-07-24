@@ -44,7 +44,7 @@ export async function login(
   const { password } = parsed.data;
 
   // US-01 (Kritisch): Rate-Limit greift VOR Argon2.
-  if (isRateLimited(email)) return { error: LOCKED_ERROR };
+  if (await isRateLimited(email)) return { error: LOCKED_ERROR };
 
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -52,7 +52,7 @@ export async function login(
   // NICHT hashPassword() aufrufen.
   if (!user) {
     await verifyDummy(password);
-    registerFailure(email);
+    await registerFailure(email);
     return { error: GENERIC_ERROR };
   }
 
@@ -61,12 +61,12 @@ export async function login(
   // Falsches Passwort ODER inaktiver Nutzer (AK-5) → dieselbe Meldung.
   // Der Verify oben ist bereits gelaufen, die Laufzeit bleibt gleich.
   if (!ok || !user.isActive) {
-    registerFailure(email);
+    await registerFailure(email);
     return { error: GENERIC_ERROR };
   }
 
   // Erfolg: Es sollen Fehlversuche zaehlen, nicht Versuche → zuruecksetzen.
-  clearRateLimit(email);
+  await clearRateLimit(email);
 
   // US-01 (Kritisch): Session-Fixation — alte Sessions invalidieren, dann neu.
   await invalidateUserSessions(user.id);

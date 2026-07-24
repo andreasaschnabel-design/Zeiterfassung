@@ -21,7 +21,13 @@ export async function renderHtmlToPdf(html: string): Promise<Uint8Array> {
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    // US-15: await page.evaluate(() => (document as any).fonts.ready);
+    // US-15 (Kritisch): document.fonts.ready abwarten. domcontentloaded/
+    // networkidle feuern vor dem Font-Parsing — sonst rendert jeder zweite
+    // Export in der Fallback-Schrift.
+    await page.evaluate(async () => {
+      await (document as unknown as { fonts: { ready: Promise<unknown> } }).fonts
+        .ready;
+    });
     const pdf = await page.pdf({
       format: "a4",
       printBackground: false,

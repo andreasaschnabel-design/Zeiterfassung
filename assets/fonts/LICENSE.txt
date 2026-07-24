@@ -1,0 +1,3 @@
+DejaVu Fonts — Bitstream Vera / DejaVu changes are in the public domain.
+See https://dejavu-fonts.github.io/License.html
+Used here only to embed readable text into the PDF export (US-15).

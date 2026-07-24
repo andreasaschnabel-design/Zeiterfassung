@@ -74,4 +74,15 @@ describe("renderExportHtml (§ 17 MiLoG)", () => {
     });
     expect(multi).toContain("page-break");
   });
+
+  it("bettet uebergebenes @font-face-CSS ein (US-15)", () => {
+    const withFont = renderExportHtml({
+      employerName: "X",
+      generatedAt: "x",
+      employees: [emp()],
+      fontFaceCss: "@font-face{font-family:'DejaVu Sans';src:url(data:font/ttf;base64,AAA)}",
+    });
+    expect(withFont).toContain("@font-face");
+    expect(withFont).toContain("data:font/ttf;base64,AAA");
+  });
 });

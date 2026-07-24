@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["fra1"],
+  "functions": {
+    "app/api/export/pdf/[userId]/[month]/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
+}
