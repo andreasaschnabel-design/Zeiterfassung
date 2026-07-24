@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guard";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/queries/settings";
-import { formatCents, eurosToCents } from "@/lib/employees/warnings";
+import { formatCents, eurosToCents } from "@/lib/money";
 import { CreateEmployeeForm } from "./create-form";
 
 // US-10/AK-1 + AK-2: Liste aller Mitarbeiter + Anlegen.

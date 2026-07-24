@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  eurosToCents,
-  formatCents,
-  suggestMonthlyLimit,
-  wageWarnings,
-} from "./warnings";
+import { eurosToCents, formatCents } from "@/lib/money";
+import { suggestMonthlyLimit, wageWarnings } from "./warnings";
 
 describe("eurosToCents", () => {
   it("akzeptiert Punkt und Komma", () => {

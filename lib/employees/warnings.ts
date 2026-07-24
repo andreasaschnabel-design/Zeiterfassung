@@ -1,28 +1,10 @@
 // US-10 (Kritisch): Mindestlohn- und Grenzwertpruefung WARNEN, blockieren
 // nicht. Serverseitig ausgewertet (nicht nur im Client).
 //
-// Geld wird in Cent (Integer) verglichen (DE-03). Die vollstaendige
-// Cent-Arithmetik (grossPay) ist in US-08 zu Hause; hier nur die fuer die
-// Warnungen noetigen Hilfen.
+// Geld wird in Cent (Integer) verglichen (DE-03). Die Cent-Hilfen leben in
+// /lib/money (kanonische Stelle fuer jede Geldrechnung).
 
-/** Euro-Decimal ("13,90" | "13.90") -> Integer-Cent. Wirft bei Unfug. */
-export function eurosToCents(input: string): number {
-  const norm = input.trim().replace(",", ".");
-  if (!/^\d+(\.\d{1,2})?$/.test(norm)) {
-    throw new Error(`Kein gueltiger Betrag: ${input}`);
-  }
-  const value = Number(norm);
-  if (!Number.isFinite(value)) {
-    throw new Error(`Kein gueltiger Betrag: ${input}`);
-  }
-  return Math.round(value * 100);
-}
-
-/** Cent -> "12,34 €" (deutsche Konvention). */
-export function formatCents(cents: number): string {
-  const euros = (cents / 100).toFixed(2).replace(".", ",");
-  return `${euros} €`;
-}
+import { eurosToCents, formatCents } from "@/lib/money";
 
 /**
  * Limit-Vorschlag beim Anlegen: earningsLimit / hourlyRate, abgerundet.

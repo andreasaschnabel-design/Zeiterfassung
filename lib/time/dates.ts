@@ -69,6 +69,19 @@ export function workDateError(
   return null;
 }
 
+/** Zeitstempel in Europe/Berlin fuer den PDF-Fuss, z. B. "24.07.2026, 14:30 Uhr". */
+export function berlinTimestamp(now: Date = new Date()): string {
+  const formatted = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(now);
+  return `${formatted} Uhr`;
+}
+
 const ISO_MONTH_RE = /^(\d{4})-(\d{2})$/;
 
 /**

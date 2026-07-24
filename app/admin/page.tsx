@@ -25,16 +25,18 @@ export default async function AdminPage() {
           Mitarbeiter verwalten
         </Link>
         <Link
+          href="/admin/export"
+          className="rounded-md border border-gray-300 px-4 py-3 text-base font-medium"
+        >
+          Export (PDF / CSV)
+        </Link>
+        <Link
           href="/admin/settings"
           className="rounded-md border border-gray-300 px-4 py-3 text-base font-medium"
         >
           Globale Einstellungen
         </Link>
       </nav>
-
-      <p className="mt-6 text-sm text-gray-500">
-        Export folgt ab US-08.
-      </p>
 
       <form action={logout} className="mt-8">
         <button
