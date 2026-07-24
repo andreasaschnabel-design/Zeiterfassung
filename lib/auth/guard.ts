@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { User } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE } from "@/lib/auth/cookie";
 import { validateSession } from "@/lib/auth/session";
 
@@ -28,4 +29,17 @@ export async function requireAdmin(): Promise<User> {
   const user = await requireUser();
   if (user.role !== "ADMIN") redirect("/dashboard");
   return user;
+}
+
+/**
+ * US-10 (Kritisch): Laedt und prueft in EINEM Schritt. Admin-Konten sind ueber
+ * Mitarbeiter-Verwaltungspfade nicht adressierbar — ein Nicht-EMPLOYEE (oder
+ * eine unbekannte id) fuehrt zu notFound(). Gilt fuer ALLE Mitarbeiter-Actions,
+ * auch setEmployeeActive.
+ */
+export async function requireEmployeeTarget(id: string): Promise<User> {
+  await requireAdmin();
+  const employee = await prisma.user.findUnique({ where: { id } });
+  if (!employee || employee.role !== "EMPLOYEE") notFound();
+  return employee;
 }

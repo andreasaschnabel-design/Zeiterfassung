@@ -46,3 +46,11 @@ model Session {
 
   @@index([userId])
 }
+
+// US-10/AK-6: Globale Parameter als key/value.
+// Schluessel: minimumWage (13.90), earningsLimit (556), employerName.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
