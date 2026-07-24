@@ -23,6 +23,12 @@ enum Role {
   EMPLOYEE
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 model User {
   id                String   @id @default(cuid())
   email             String   @unique
@@ -34,7 +40,45 @@ model User {
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
 
-  sessions Session[]
+  sessions    Session[]
+  timeEntries TimeEntry[]
+  auditLogs   AuditLog[]  @relation("AuditActor")
+}
+
+model TimeEntry {
+  id              String    @id @default(cuid())
+  userId          String
+  workDate        DateTime  @db.Date // DE-02: reines Datum ohne Zeitzone
+  startTime       String // "HH:MM"
+  endTime         String // "HH:MM"
+  breakMinutes    Int
+  durationMinutes Int // DE-01: persistiert, nicht nur berechnet
+  note            String?
+  deletedAt       DateTime? // DE-04: Soft-Delete
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdById     String
+
+  user      User       @relation(fields: [userId], references: [id])
+  auditLogs AuditLog[]
+
+  @@index([userId, workDate])
+  @@index([deletedAt])
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  timeEntryId String
+  changedById String
+  action      AuditAction
+  oldValues   Json?
+  newValues   Json?
+  changedAt   DateTime    @default(now())
+
+  timeEntry TimeEntry @relation(fields: [timeEntryId], references: [id])
+  changedBy User      @relation("AuditActor", fields: [changedById], references: [id])
+
+  @@index([timeEntryId, changedAt])
 }
 
 model Session {
