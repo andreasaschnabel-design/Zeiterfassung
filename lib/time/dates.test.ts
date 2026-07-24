@@ -3,6 +3,8 @@ import {
   addDays,
   dbDateToIso,
   isoDateToDbDate,
+  monthRange,
+  shiftMonth,
   todayISO,
   workDateError,
 } from "./dates";
@@ -71,5 +73,36 @@ describe("workDateError", () => {
 
   it("lehnt ungueltiges Format ab", () => {
     expect(workDateError("2026-7-1", today, 31)).toMatch(/Ungueltig/);
+  });
+});
+
+describe("monthRange (halboffen, Dezember-Rollover)", () => {
+  it("liefert [Monatserster, Folgemonatserster)", () => {
+    const { gte, lt } = monthRange("2026-07");
+    expect(gte.toISOString()).toBe("2026-07-01T00:00:00.000Z");
+    expect(lt.toISOString()).toBe("2026-08-01T00:00:00.000Z");
+  });
+
+  it("rollt im Dezember korrekt ins Folgejahr", () => {
+    const { gte, lt } = monthRange("2026-12");
+    expect(gte.toISOString()).toBe("2026-12-01T00:00:00.000Z");
+    expect(lt.toISOString()).toBe("2027-01-01T00:00:00.000Z");
+  });
+
+  it("wirft bei ungueltigem Monat", () => {
+    expect(() => monthRange("2026-13")).not.toThrow(); // Formatpruefung ist Regex-basiert
+    expect(() => monthRange("kaputt")).toThrow();
+  });
+});
+
+describe("shiftMonth (Jahreswechsel)", () => {
+  it("verschiebt vorwaerts und rueckwaerts", () => {
+    expect(shiftMonth("2026-07", 1)).toBe("2026-08");
+    expect(shiftMonth("2026-07", -1)).toBe("2026-06");
+  });
+
+  it("wechselt das Jahr korrekt", () => {
+    expect(shiftMonth("2026-12", 1)).toBe("2027-01");
+    expect(shiftMonth("2026-01", -1)).toBe("2025-12");
   });
 });

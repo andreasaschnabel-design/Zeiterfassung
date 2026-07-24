@@ -1,14 +1,29 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/guard";
-import { prisma } from "@/lib/prisma";
-import { formatMinutes } from "@/lib/time/core";
-import { dbDateToIso, todayISO } from "@/lib/time/dates";
+import { formatDecimalHours, formatMinutes } from "@/lib/time/core";
+import { shiftMonth, todayISO } from "@/lib/time/dates";
+import { getMonth } from "@/lib/queries/month";
+import { evaluateLimit, type LimitStatus } from "@/lib/time/limit";
 import { logout } from "../(auth)/login/actions";
 import { EntryForm } from "./entry-form";
 
-// Mitarbeiter-Landing: Eingabe + (vorlaeufige) Monatsliste.
-// US-05 ergaenzt Monatssumme, Limit-Ampel und Monatsnavigation.
-export default async function DashboardPage() {
+const BAR_COLOR: Record<LimitStatus, string> = {
+  OK: "bg-green-600",
+  WARNING: "bg-amber-500",
+  EXCEEDED: "bg-red-600",
+};
+
+const STATUS_TEXT: Record<LimitStatus, string | null> = {
+  OK: null,
+  WARNING: "Monatslimit bald erreicht (ab 90 %).",
+  EXCEEDED: "Monatslimit erreicht oder ueberschritten.",
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
   const user = await requireUser();
 
   // Admins haben keinen Erfassungsbereich (DB-Trigger verbietet Admin-Eintraege).
@@ -31,17 +46,24 @@ export default async function DashboardPage() {
   }
 
   const today = todayISO();
-  const year = Number(today.slice(0, 4));
-  const month = Number(today.slice(5, 7));
-  // Halboffener Monatsbereich [gte, lt). Date.UTC(year, month, 1) rollt korrekt
-  // ins Folgejahr (die kanonische monthRange() kommt mit US-05).
-  const gte = new Date(Date.UTC(year, month - 1, 1));
-  const lt = new Date(Date.UTC(year, month, 1));
+  const currentMonth = today.slice(0, 7);
+  const minMonth = todayISO(user.createdAt).slice(0, 7); // rueckwaerts bis Kontoanlage
 
-  const entries = await prisma.timeEntry.findMany({
-    where: { userId: user.id, workDate: { gte, lt } },
-    orderBy: [{ workDate: "asc" }, { startTime: "asc" }],
-  });
+  // AK-5 (Kritisch): Bereichspruefung auch fuer den URL-Parameter, nicht nur
+  // fuer die Pfeile. Ungueltiges/ausserhalb -> auf den zulaessigen Bereich klemmen.
+  const sp = await searchParams;
+  let ym = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : currentMonth;
+  if (ym > currentMonth) ym = currentMonth;
+  if (ym < minMonth) ym = minMonth;
+
+  const { entries, totalMinutes } = await getMonth(user.id, ym);
+  const limitMinutes = Math.round(Number(user.monthlyLimitHours) * 60);
+  const limit = evaluateLimit(totalMinutes, limitMinutes);
+  const displayPercent = Math.round(limit.percent);
+
+  const hasPrev = ym > minMonth;
+  const hasNext = ym < currentMonth;
+  const statusText = STATUS_TEXT[limit.status];
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
@@ -58,12 +80,82 @@ export default async function DashboardPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">
-          Dieser Monat ({today.slice(0, 7)})
-        </h2>
+        {/* AK-5: Navigation — Pfeile deaktivieren, nicht verstecken. */}
+        <div className="mb-4 flex items-center justify-between">
+          {hasPrev ? (
+            <Link
+              href={`/dashboard?month=${shiftMonth(ym, -1)}`}
+              className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm"
+            >
+              ← Vormonat
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="min-h-11 rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-300"
+            >
+              ← Vormonat
+            </span>
+          )}
+
+          <h2 className="text-lg font-semibold">{ym}</h2>
+
+          {hasNext ? (
+            <Link
+              href={`/dashboard?month=${shiftMonth(ym, 1)}`}
+              className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm"
+            >
+              Folgemonat →
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="min-h-11 rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-300"
+            >
+              Folgemonat →
+            </span>
+          )}
+        </div>
+
+        {/* AK-2 + AK-3 + AK-4: Summe, Fortschritt, Ampel */}
+        <div className="mb-6">
+          <p className="mb-1 text-sm">
+            <span className="font-semibold">
+              {formatDecimalHours(totalMinutes)} Std
+            </span>{" "}
+            von {formatDecimalHours(limitMinutes)} Std ({displayPercent} %)
+          </p>
+          <div
+            role="progressbar"
+            aria-valuenow={Math.min(100, displayPercent)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuetext={`${formatDecimalHours(totalMinutes)} von ${formatDecimalHours(limitMinutes)} Stunden, ${displayPercent} Prozent`}
+            className="h-3 w-full overflow-hidden rounded-full bg-gray-200"
+          >
+            <div
+              className={`h-full ${BAR_COLOR[limit.status]}`}
+              style={{ width: `${limit.barPercent}%` }}
+            />
+          </div>
+          {/* Farbe traegt die Information nicht allein: Statustext sichtbar. */}
+          {statusText ? (
+            <p
+              className={`mt-2 text-sm font-medium ${
+                limit.status === "EXCEEDED" ? "text-red-700" : "text-amber-800"
+              }`}
+            >
+              {statusText}
+            </p>
+          ) : null}
+        </div>
+
         {entries.length === 0 ? (
+          // AK-7: Leerzustand kontextabhaengig.
           <p className="rounded-md border border-dashed border-gray-300 p-6 text-gray-600">
-            Noch keine Zeiten in diesem Monat erfasst.
+            {ym === currentMonth
+              ? "Noch keine Zeiten in diesem Monat — erfasse deine erste Zeit oben."
+              : "Keine Zeiten in diesem Monat erfasst."}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -81,7 +173,7 @@ export default async function DashboardPage() {
               <tbody>
                 {entries.map((e) => (
                   <tr key={e.id} className="border-b">
-                    <td className="py-2 pr-4">{dbDateToIso(e.workDate)}</td>
+                    <td className="py-2 pr-4">{e.workDate}</td>
                     <td className="py-2 pr-4">{e.startTime}</td>
                     <td className="py-2 pr-4">{e.endTime}</td>
                     <td className="py-2 pr-4">{e.breakMinutes} min</td>

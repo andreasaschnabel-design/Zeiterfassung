@@ -68,3 +68,33 @@ export function workDateError(
   }
   return null;
 }
+
+const ISO_MONTH_RE = /^(\d{4})-(\d{2})$/;
+
+/**
+ * Halboffener Monatsbereich `[gte, lt)` fuer "YYYY-MM".
+ * `Date.UTC(year, 12, 1)` rollt korrekt ins Folgejahr — kein Dezember-Sonderfall.
+ */
+export function monthRange(ym: string): { gte: Date; lt: Date } {
+  const m = ISO_MONTH_RE.exec(ym);
+  if (!m) throw new Error(`Ungueltiger Monat: ${JSON.stringify(ym)}`);
+  const year = Number(m[1]);
+  const month = Number(m[2]); // 1..12
+  return {
+    gte: new Date(Date.UTC(year, month - 1, 1)),
+    lt: new Date(Date.UTC(year, month, 1)),
+  };
+}
+
+/**
+ * Verschiebt "YYYY-MM" um `delta` Monate. Ueber Date.UTC, damit der
+ * Jahreswechsel korrekt ist (nicht `month - 1`). Auch von US-04 genutzt.
+ */
+export function shiftMonth(ym: string, delta: number): string {
+  const m = ISO_MONTH_RE.exec(ym);
+  if (!m) throw new Error(`Ungueltiger Monat: ${JSON.stringify(ym)}`);
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const d = new Date(Date.UTC(year, month - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}

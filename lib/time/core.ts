@@ -47,6 +47,11 @@ export function formatMinutes(total: number): string {
   return `${sign}${h}:${String(m).padStart(2, "0")}`;
 }
 
+/** AK-2: Minuten -> Dezimalstunden mit Dezimalkomma, z. B. 450 -> "7,50". */
+export function formatDecimalHours(minutes: number): string {
+  return (minutes / 60).toFixed(2).replace(".", ",");
+}
+
 /**
  * US-02 (Kritisch): ArbZG-Hinweise als WARNUNG, nicht als Ablehnung.
  * §4: 30 Min Pause ab >6 Std, 45 Min ab >9 Std. §3: Hinweis ab >10 Std.

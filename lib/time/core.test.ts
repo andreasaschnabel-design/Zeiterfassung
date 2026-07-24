@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   arbeitszeitHinweise,
   calculateDuration,
+  formatDecimalHours,
   formatMinutes,
   grossMinutes,
   isValidHHMM,
@@ -45,6 +46,14 @@ describe("formatMinutes", () => {
     expect(formatMinutes(450)).toBe("7:30");
     expect(formatMinutes(60)).toBe("1:00");
     expect(formatMinutes(5)).toBe("0:05");
+  });
+});
+
+describe("formatDecimalHours", () => {
+  it("formatiert Dezimalstunden mit Komma", () => {
+    expect(formatDecimalHours(450)).toBe("7,50");
+    expect(formatDecimalHours(2400)).toBe("40,00");
+    expect(formatDecimalHours(0)).toBe("0,00");
   });
 });
 
