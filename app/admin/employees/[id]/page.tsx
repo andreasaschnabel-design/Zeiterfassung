@@ -51,9 +51,17 @@ export default async function EmployeeDetailPage({
         <Link href="/admin/employees" className="text-sm text-blue-700 underline">
           ← Zur Mitarbeiterliste
         </Link>
-        <Link href="/admin/overview" className="text-sm text-blue-700 underline">
-          Monatsuebersicht
-        </Link>
+        <div className="flex gap-4">
+          <Link
+            href={`/admin/employees/${employee.id}/year`}
+            className="text-sm text-blue-700 underline"
+          >
+            Jahresuebersicht
+          </Link>
+          <Link href="/admin/overview" className="text-sm text-blue-700 underline">
+            Monatsuebersicht
+          </Link>
+        </div>
       </div>
 
       <h1 className="text-2xl font-semibold">{employee.name}</h1>

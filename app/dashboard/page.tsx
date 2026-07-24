@@ -69,9 +69,14 @@ export default async function DashboardPage({
     <main className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Zeiterfassung</h1>
-        <form action={logout}>
-          <button className="text-sm text-gray-600 underline">Abmelden</button>
-        </form>
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/year" className="text-sm text-blue-700 underline">
+            Jahresuebersicht
+          </Link>
+          <form action={logout}>
+            <button className="text-sm text-gray-600 underline">Abmelden</button>
+          </form>
+        </div>
       </div>
 
       <section className="mb-10">

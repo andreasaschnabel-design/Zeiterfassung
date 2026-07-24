@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { WARNING_THRESHOLD } from "@/lib/constants";
-import { evaluateLimit } from "./limit";
+import { evaluateCentsLimit, evaluateLimit } from "./limit";
 
 const LIMIT = 2400; // 40 Std in Minuten
 
@@ -31,5 +31,22 @@ describe("evaluateLimit (AK-4)", () => {
     expect(r.status).toBe("OK");
     expect(r.percent).toBe(0);
     expect(Number.isFinite(r.percent)).toBe(true);
+  });
+});
+
+describe("evaluateCentsLimit teilt die Schwelle mit evaluateLimit", () => {
+  it("liefert bei gleicher ratio denselben Status (an der 90%-Schwelle)", () => {
+    // 90 % in Minuten und in Cent muessen identisch bewertet werden.
+    const minutes = evaluateLimit(Math.round(2400 * WARNING_THRESHOLD), 2400);
+    const cents = evaluateCentsLimit(
+      Math.round(667200 * WARNING_THRESHOLD),
+      667200, // 12 * 55600
+    );
+    expect(cents.status).toBe(minutes.status);
+    expect(cents.status).toBe("WARNING");
+  });
+
+  it("EXCEEDED ab 100 % (Cent)", () => {
+    expect(evaluateCentsLimit(667200, 667200).status).toBe("EXCEEDED");
   });
 });
