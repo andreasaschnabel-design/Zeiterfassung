@@ -13,6 +13,12 @@ export default async function AdminPage() {
 
       <nav className="mt-6 flex flex-col gap-3">
         <Link
+          href="/admin/overview"
+          className="rounded-md border border-gray-300 px-4 py-3 text-base font-medium"
+        >
+          Monatsuebersicht
+        </Link>
+        <Link
           href="/admin/employees"
           className="rounded-md border border-gray-300 px-4 py-3 text-base font-medium"
         >
@@ -27,7 +33,7 @@ export default async function AdminPage() {
       </nav>
 
       <p className="mt-6 text-sm text-gray-500">
-        Monatsuebersicht, Korrektur und Export folgen ab US-06.
+        Export folgt ab US-08.
       </p>
 
       <form action={logout} className="mt-8">

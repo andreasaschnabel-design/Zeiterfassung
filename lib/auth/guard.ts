@@ -90,3 +90,20 @@ export async function requireOwnEditableEntry(
 
   return { ok: true, entry };
 }
+
+/**
+ * US-07: Admin-Zugriff auf einen beliebigen Eintrag.
+ *
+ * Prueft `isEmployeeEditable` BEWUSST NICHT — der Admin ist der Eskalationsweg
+ * und unterliegt weder Karenzfrist noch MAX_BACKDATE_DAYS. Fremd/geloescht/
+ * unbekannt → notFound(). Liefert Admin und Eintrag; `entry.userId` ist der
+ * betroffene Mitarbeiter (fuer die Konfliktpruefung, AK-9).
+ */
+export async function requireAdminEntryAccess(
+  id: string,
+): Promise<{ admin: User; entry: TimeEntry }> {
+  const admin = await requireAdmin();
+  const entry = await prisma.timeEntry.findUnique({ where: { id } });
+  if (!entry || entry.deletedAt !== null) notFound();
+  return { admin, entry };
+}
