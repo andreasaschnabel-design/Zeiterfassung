@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOwnEditableEntry } from "@/lib/auth/guard";
-import { dbDateToIso } from "@/lib/time/dates";
+import { dbDateToIso, berlinTimestamp } from "@/lib/time/dates";
 import { formatMinutes } from "@/lib/time/core";
+import { actionLabel, buildChanges } from "@/lib/audit/changes";
+import { getForeignChanges } from "@/lib/queries/history";
 import { EditEntryForm } from "./edit-entry-form";
 
 // US-04: Eigenen Eintrag korrigieren. Editierbar → Formular; gesperrt (zu alt)
@@ -19,6 +21,10 @@ export default async function EditEntryPage({
   // Ab hier: ok:true (editierbar) ODER locked — beide tragen `entry`.
   const entry = result.entry;
   const workDate = dbDateToIso(entry.workDate);
+
+  // US-11 (Kritisch): Fremdaenderungen an eigenen Eintraegen (changedById != user).
+  // entry.userId ist der angemeldete Nutzer (vom Guard geprueft).
+  const foreignChanges = await getForeignChanges(entry.id, entry.userId);
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
@@ -68,6 +74,42 @@ export default async function EditEntryPage({
           </dl>
         </div>
       )}
+
+      {foreignChanges.length > 0 ? (
+        <section className="mt-10 border-t pt-6">
+          <h2 className="mb-3 text-lg font-semibold">Aenderungen durch die Verwaltung</h2>
+          <ol className="space-y-4">
+            {foreignChanges.map((log) => {
+              const changes = buildChanges(log.action, log.oldValues, log.newValues);
+              return (
+                <li key={log.id} className="rounded-md border border-gray-200 p-4">
+                  <p className="mb-2 text-sm text-gray-600">
+                    {actionLabel(log.action)} · {berlinTimestamp(log.changedAt)}
+                  </p>
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-gray-500">
+                        <th className="py-1 pr-4">Feld</th>
+                        <th className="py-1 pr-4">Vorher</th>
+                        <th className="py-1">Nachher</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {changes.map((c) => (
+                        <tr key={c.label} className="border-b last:border-0">
+                          <td className="py-1 pr-4">{c.label}</td>
+                          <td className="py-1 pr-4">{c.from ?? "—"}</td>
+                          <td className="py-1">{c.to ?? "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ) : null}
     </main>
   );
 }

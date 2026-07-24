@@ -31,6 +31,12 @@ export default async function AdminPage() {
           Export (PDF / CSV)
         </Link>
         <Link
+          href="/admin/deleted"
+          className="rounded-md border border-gray-300 px-4 py-3 text-base font-medium"
+        >
+          Geloeschte Eintraege
+        </Link>
+        <Link
           href="/admin/settings"
           className="rounded-md border border-gray-300 px-4 py-3 text-base font-medium"
         >

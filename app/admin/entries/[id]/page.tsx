@@ -35,6 +35,15 @@ export default async function AdminEntryPage({
       </h1>
       <p className="mt-1 text-gray-600">{employee?.name}</p>
 
+      <p className="mt-2">
+        <Link
+          href={`/admin/entries/${entry.id}/history`}
+          className="text-sm text-blue-700 underline"
+        >
+          Aenderungsprotokoll ansehen
+        </Link>
+      </p>
+
       <div className="mt-6">
         <AdminEditEntryForm
           entry={{
