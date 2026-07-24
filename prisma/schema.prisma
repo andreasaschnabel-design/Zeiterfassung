@@ -1,0 +1,48 @@
+// Zeiterfassung — Prisma-Schema
+//
+// Aufbau Story fuer Story (CLAUDE.md, Umsetzungsreihenfolge). Dieses Schema
+// enthaelt aktuell nur die fuer US-01 (Auth + Rollen) noetigen Modelle.
+// Weitere Modelle (TimeEntry, AuditLog, SecurityLog, Setting) sowie die
+// Rueckrelationen an User kommen mit ihren jeweiligen Stories hinzu.
+//
+// DE-06: Sessions sind opak. Es wird nur der sha256(token) als Session.id
+// gespeichert, niemals der Token selbst (siehe lib/auth/session.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  passwordHash      String
+  name              String
+  role              Role     @default(EMPLOYEE)
+  hourlyRate        Decimal  @default(13.90) @db.Decimal(5, 2)
+  monthlyLimitHours Decimal  @default(40) @db.Decimal(5, 2)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  sessions Session[]
+}
+
+model Session {
+  id        String   @id // sha256(token), nie der Token selbst
+  userId    String
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
